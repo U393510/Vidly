@@ -8,7 +8,7 @@ namespace Vidly.Models
 {
     public class MovieImage
     {
-
+        //Will hold Movie Image in Binary 
         public int Id { get; set; }
 
         [Required]
