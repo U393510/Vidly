@@ -1,0 +1,52 @@
+﻿
+@{
+    /**/
+
+    ViewBag.Title = "UploadFile";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Upload File</h2>
+@using (Html.BeginForm("UploadImageToDb", "Home", FormMethod.Post, new { enctype = "multipart/form-data" }))
+{
+    
+<div>
+    <input type="file" name="postedFile" />
+    @*@Html.TextBox("file", "", new { type = "file" }) <br />*@
+    @*<input type="file" class="fileUpload" name="files" multiple  />*@
+    <br />
+    <br />
+    <input type="submit" value="Upload" /><br />
+    @ViewBag.Message
+    <br />
+    @if (ViewBag.FilesSaved != null)
+    {
+        <ul>
+            @foreach (var file in ViewBag.FilesSaved)
+            {
+                <li> @file </li>
+            }
+        </ul>
+    }
+
+    @if (ViewBag.imagelst != null)
+    {
+        <ul>
+            @foreach (var mvi in ViewBag.imagelst)
+            {
+                <li> @mvi.Name : <img src="data:image/jpeg;base64,@(Convert.ToBase64String(mvi.MovieImg))"> </li>
+
+            }
+        </ul>
+    }
+</div>
+
+}
+
+@section scripts
+{
+    <script>
+
+    </script>
+}
+

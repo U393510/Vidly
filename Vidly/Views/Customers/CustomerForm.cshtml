@@ -1,0 +1,67 @@
+﻿@model Vidly.ViewModels.CustomerFormViewModel
+@*
+    Since we need MembershipType along with Customer so we need to use
+    ViewModel having both MembershipTypes and Customer Objects
+*@
+@{
+    ViewBag.Title = "Customer Form";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>New Customer</h2>
+@*
+    To render a form we need to use HTML helper methods and pass mvc action and Controller name
+    like @HTML.BeginForm("Create","Customers") but this has one issue it renders only <form>
+    and not </form> closing tag so how do we render closing tag. This method returns a disposable
+    object so if we wrap this method inside using block then object returned by Html.BeginForm
+    will be disposed and in dispose method it will simply render </form> close tag
+*@
+
+@using (Html.BeginForm("Save", "Customers"))
+{
+    @Html.ValidationSummary(true,"Please fix the following errors")
+    //Now we need to use special markup to render responsive form
+    //that bootstrap also understands i.e. use class form-group
+    <div class="form-group">
+        @Html.LabelFor(m => m.Customer.Name)
+        @*
+            Now let us pass the second argument to this which will be rendered as an Html attribute.
+            We have added an anonymous object and passing style class form-control to show modern text box in form.
+            We had to prefix the class with @ because it is a reserved keyword
+        *@
+        @Html.TextBoxFor(m => m.Customer.Name, new { @class = "form-control" })
+        @Html.ValidationMessageFor(m=>m.Customer.Name)
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(m => m.Customer.Birthdate)
+        @Html.TextBoxFor(m => m.Customer.Birthdate, "{0:d MMM yyyy }", new { @class = "form-control" })
+        @Html.ValidationMessageFor(m => m.Customer.Birthdate)
+    </div>
+    @*
+        Drodown Arguments explaination
+        Argument 1: m=>m.customer.MembershipTypeId  (Specifies this is DD is for MembershipTypeId)
+        Argument2: new SelectList(Model.MembershipTypes, “Id”,”Name”) means dropdown will have Value=Id and Text= Membership Name.
+        Argument3: “Select Membership Type” – Top element that will be shown in dropdown having no Id associated with it.
+        Argument 4 : Style class Form-control attached
+    *@
+    <div class="form-group">
+        @Html.LabelFor(m => m.Customer.MembershipTypeId)
+        @Html.DropDownListFor(m => m.Customer.MembershipTypeId, new SelectList(Model.MembershipTypes, "Id", "Name"), "Select Membership Type", new { @class = "form-control" })
+        @Html.ValidationMessageFor(m=>m.Customer.MembershipTypeId)
+    </div>
+
+    <div class="form-check">
+        @Html.CheckBoxFor(m => m.Customer.IsSubscribedToNewsletter)
+        <label class="form-check-label" for="defaultCheck1">
+            Subscribed to newsletter?
+        </label>
+    </div>
+    @*Since we need customer id in save method so we are adding hidden field to capture it *@
+    @Html.HiddenFor(m=>m.Customer.Id)
+    @Html.AntiForgeryToken()
+    <button Type="submit" class="btn btn-primary">Save</button>
+}
+@section scripts
+{   
+    @Scripts.Render("~/bundles/jqueryval")
+}

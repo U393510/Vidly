@@ -1,0 +1,49 @@
+﻿@model Vidly.ViewModels.MovieFormViewModel
+@{
+    ViewBag.Title = "Movie Form";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var formTitle = "";
+}
+<h2>@Model.Title</h2>
+
+@using (Html.BeginForm("Save", "Movies"))
+{
+    @Html.ValidationSummary(true, "Please fix the below error(s)")
+    <div class="form-group">
+        @Html.LabelFor(m => m.Name)
+        @Html.TextBoxFor(m => m.Name, new { @class = "form-control" })
+        @Html.ValidationMessageFor(m => m.Name)
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(m => m.ReleaseDate)
+        @Html.TextBoxFor(m => m.ReleaseDate, "{0:d MMM yyyy}", new { @class = "form-control" })
+        @Html.ValidationMessageFor(m => m.ReleaseDate)
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(m => m.DateAdded)
+        @Html.TextBoxFor(m => m.DateAdded, "{0:d MMM yyyy}", new { @class = "form-control" })
+        @Html.ValidationMessageFor(m => m.DateAdded)
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(m => m.GenreId)
+        @Html.DropDownListFor(m => m.GenreId, new SelectList(Model.Genres, "Id", "Name"), "Select Genre", new { @class = "form-control" })
+        @Html.ValidationMessageFor(m => m.GenreId)
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(m => m.NumberInStock)
+        @Html.TextBoxFor(m => m.NumberInStock, new { @class = "form-control" })
+        @Html.ValidationMessageFor(m => m.NumberInStock)
+    </div>
+    @Html.HiddenFor(m=>m.Id)
+    @Html.AntiForgeryToken()
+    <button Type="submit" class="btn btn-primary">Save</button>
+}
+@*Let is render script tag for client side scripting this 
+  will get rendered in Layout.cshtm at line having 
+  RenderSection ("Scripts", required: false)*@
+@section Scripts
+{
+    @Scripts.Render("~/bundles/jqueryval")
+}
+
+

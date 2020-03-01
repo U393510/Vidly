@@ -1,0 +1,48 @@
+﻿@{
+    ViewBag.Title = "Movies";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Movies</h2>
+<table id="movies" class="table table-bordered table-hover">
+    <thead>
+        <tr>
+            <th>Movie</th>
+            <th>Genre</th>
+        </tr>
+    </thead>
+    <tbody>
+
+    </tbody>
+</table>
+   
+@section scripts 
+{
+<script>
+    $(document).ready(function () {
+
+        var movietable = $("#movies").DataTable({
+            //Step1: Specify data source for Jquery DataTable Plugin
+            //In current case Movie api directly providing data so dataSrc set empty string
+            ajax: {
+                url: "/api/movies",
+                dataSrc: ""
+            },
+            //Step2: Create columns and define them in an array
+            columns: [
+                        {
+                            //our first column in the view shows movie names with hyperlink attached
+                            //so when link clicked it goes to /movies/edit/1 example 
+                            data: "name",
+                           
+                        },
+                        {
+                            //second column shows Movie Genre
+                            data: "genre.name"
+                        }
+                    ]
+            });
+    });
+    
+</script>
+}

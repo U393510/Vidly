@@ -1,0 +1,188 @@
+﻿@{
+    ViewBag.Title = "New Rental Form";
+
+    @* commented below line as we already have a layout specified 
+        inside _viewStart.cshtml which would be placed on top of all 
+        views. 
+        Layout = "~/Views/Shared/_Layout.cshtml";*@
+}
+
+<h2>New</h2>
+<form id="newRental">
+    <div class="form-group">
+        <label>Customer</label>
+        <div class="tt-container">
+            @* Always define Id as well as name when working with Jquery in HTML control *@
+            <input id="customer" name="customer" required type="text" value="" class="form-control" />
+        </div>
+    </div>
+    <div class="form-group">
+        <label>Movie</label>
+        <div class="tt-container">
+            <input id="movie" name="movie" required type="text" value="" class="form-control" />
+        </div>
+    </div>
+    <div class="col-md-4 col-sm-4">
+        <ul id="movies" name="movies" class="list-group"></ul>
+    </div>
+        <button class="btn btn-primary">Submit</button>
+</form>
+
+@section scripts
+{
+    @*We have imported JqueyVal for implementing client side validation. 
+        Since we are not implementing client validation in all forms there 
+        we have not included it in our layout if we plan to use it 
+        everywhere then we should include it in our Lib bundle*@
+    @Scripts.Render("~/bundles/jqueryval")
+    <script>
+        $(document).ready(function () {
+             //Blank viewmodel object created on client which will be used to hold
+            // the Id of the customer selected by the user in typeahead dropdown 
+            //Let us capture movies ids in existing blank vm
+            vm = {
+                movieIds:[]
+            };
+            //bloodhound is the suggestion engine behind typeahead
+            //it encapsulates all the business logic for auto completion such 
+            //calling the backend api, caching results
+            //In line datumTokenizer: Bloodhound.tokenizers.obj.whitespace('value')
+            //The value string replaced with name as our customer has name field and no value
+
+            var customers = new Bloodhound({
+                datumTokenizer: Bloodhound.tokenizers.obj.whitespace('name'),
+                queryTokenizer: Bloodhound.tokenizers.whitespace,
+                remote: {
+                    //we are giving URL of our api and passing parameter 
+                    //Typed by the user and is available inside wildcard : %QUERY'
+                    //given below
+
+                    url: '/api/customers?query=%QUERY',
+                    wildcard: '%QUERY'
+                }
+            });
+             //Below we pass our Customer textbox id specified in above form
+            //In typeahead(null, {...}) method null can be replaced 
+            //with behaviour such as we want user type at least 3 characters
+            //and in suggestions produced highlight the 3 characters matched
+
+            $('#customer').typeahead({
+                //Searching start after typing at least three characters 
+                minLength: 3,
+                highlight: true
+
+            }, {
+                    name: 'customers',
+                    display: 'name',    //this specify what field to display in our suggestion list
+                    source: customers
+                    //source is the bloodhoud object created above
+                    //below we are chaining the typehead selection event and passing event to callback function
+                    //where we are passing the customer's id selected back to server 
+                }).on("typeahead:select", function (e, customer) {
+                    vm.customerId = customer.id;
+                });
+
+        var movies = new Bloodhound({
+            datumTokenizer: Bloodhound.tokenizers.obj.whitespace('name'),
+            queryTokenizer: Bloodhound.tokenizers.whitespace,
+            remote: {
+                url: '/api/movies?query=%QUERY',
+                wildcard: '%QUERY'
+            }
+        });
+
+            $('#movie').typeahead({
+                minLength: 3,
+                highlight: true
+            }, {
+                    name: 'movies',
+                    display: 'name',
+                    source: movies
+                }).on("typeahead:select", function (e, movie) {
+                    //append the movies selected by user in to <ul> 
+                    //placeholder declared in above form
+                    $("#movies").append("<li class='list-group-item'>" + movie.name + "</li>");
+                    //Now we need to create a textbox after a selection 
+                    //so get movie textbox and to change val property for text box 
+                    //we need to use typeahead (as we are using typeahead jquery plugin)
+                    //and set the textbox value to empty string 
+                    $("#movie").typeahead("val", "");
+                    //We need to store movies selected by user in some place 
+                    //so that we can send it to server later on therefore we added
+                    //a property in our view model called movieIds 
+                    vm.movieIds.push(movie.id);
+                });
+            //Below is custom validate method that Jquery will call 
+            $.validator.addMethod("validCustomer", function () {
+                return vm.customerId && vm.customerId != 0;
+            }, "Please select a valid customer");
+
+            //Below is custom validate method that Jquery will call 
+            $.validator.addMethod("atleastOneMovie", function () {
+                return vm.movieIds.length > 0;
+            }, "Please select at least one movie");
+
+            //Below will enable client validation on frontend. 
+            //Validate method returns validator objects capture it 
+            //for resetting form validation after successful submission
+           var validator =  $('#newRental').validate({
+                submitHandler: function () {
+                    //Below line will prevent the form from submitting normally
+                    //if don't do this we get a traditional HTML form and 
+                    //we don't want that as we want to use Ajax only but this code 
+                    //will not fire now as we moved it inside validate so comment this line 
+                    //e.preventDefault();
+                    //Build ajax call
+                    $.ajax({
+                        url: "/api/newRentals",
+                        method: "post",
+                        data: vm // ViewModel containing ID and Movies that we have stored above
+                    }).done(function () { //on completion we are chaining done method 
+                        //this will fire when everthing executed successfully 
+                        toastr.success("Rentals successfuly recorded.")
+                        //After successful recording details we need to 
+                        //empty out both the text boxes 
+                        $("#customer").typeahead("val", "");
+                        $("#movie").typeahead("val", "");
+                        //for clearing list of movies we simply call below as 
+                        //we are not using tyeahead in this case 
+                        $("#movies").empty();
+                        //So above three lines will clear the form and  
+                        // we need reset/ empty our viewmodel created for this function 
+                        vm = { movieIds: [] };
+                        //Finally we need to reset the state of the form in terms of its validation
+                        validator.resetForm();
+                        // console.log("done");
+                    }).fail(function () {
+                        toastr.error("Something unexpected happened.")
+                        })
+                    //below line will prevent the form to submit normally
+                    //i.e. it is the alternative to e.preventDefault();.
+                    return false
+                }
+                
+            })
+            //TO enable validation before form is submitted we move the 
+            //code inside this method to above validate method and comment
+            //below lines
+            //$('#newRental').submit(function (e) {
+            //    //Below line will prevent the form from submitting normally
+            //    //if don't do this we get a traditional HTML form and 
+            //    //we don't want that as we want to use Ajax only
+            //    e.preventDefault();
+            //    //Build ajax call
+            //    $.ajax({
+            //        url: "/api/newRentals",
+            //        method: "post",
+            //        data: vm // ViewModel containing ID and Movies that we have stored above
+            //    }).done(function () { //on completion we are chaining done method 
+            //        //this will fire when everthing executed successfully 
+            //        toastr.success("Rentals successfuly recorded.")
+            //       // console.log("done");
+            //        }).fail(function () {
+            //            toastr.error("Something unexpected happened.")
+            //        })
+            //})
+        })
+    </script>
+}

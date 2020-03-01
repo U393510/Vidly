@@ -1,0 +1,101 @@
+﻿@model IEnumerable<Vidly.Models.Customer>
+@*
+    Note: I have set the model for this view to IEnumerable<Customer>. 
+    This is a simple interface implemented by the list class. 
+    Since in this view we only want to iterate over this list, and 
+    we don’t need any of the operations in the list class ( ex Add, Remove, etc.), 
+    it’s better to use the IEnumerable interface, which allows use to iterate over the list. 
+    If in the future, we replace the list with a different data structure, as long as it is 
+    enumerable, our view code will remain unchanged.
+*@
+
+@{
+    ViewBag.Title = "Customers";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Customers</h2>
+@if (!Model.Any())
+{
+    <p>We don't have any customer yet</p>
+}
+else
+{
+    <table id="customers" class="table table-bordered table-hover">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Membership Type</th>
+                <th>Discount Rate</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var customer in Model)
+            {
+            <tr>
+                <td>
+                    @*@Html.ActionLink(customer.Name, "Details", "Customers", new { id = customer.Id }, null)*@
+                    @Html.ActionLink(customer.Name, "Edit", "Customers", new { id = customer.Id }, null)
+                </td>
+                <td>
+                    @customer.MembershipType.Name
+                </td>
+                <td>
+                    @customer.MembershipType.DiscountRate%
+                </td>
+                <td>
+                    <button data-customer-id="@customer.Id" class="btn-link js-delete">Delete</button>
+                </td>
+            </tr>
+            }
+
+        </tbody>
+    </table>
+}
+@section scripts
+{
+    <script>
+        $(document).ready(function () {
+            //Apply data table plugin to our customers table 
+            $("#customers").DataTable();
+
+            //Look for DOM element having id = customers  which is our table 
+            //in current case and search for element in it having js-delete class
+            //and capture button on click event and specify call back furnction which
+            //will be called when button is clicked and we will capture reference to this button. 
+            //we will first ask user to confirm delete and then make an ajax call
+            //having uri + id by using data attribute data-any Name and refer to it
+            //finally with reference to Delete button which is residing in side table row i.e. its parent
+            //you will call button.parents("tr").remove to remove the row after deletion
+            $("#customers").on("click",".js-delete", function () {
+                var button = $(this)
+                /*
+                if (confirm("Are you sure you want to delete this customer?")) {
+                    $.ajax({
+                        url: "api/customers/" + button.attr("data-customer-id"),
+                        method: "DELETE",
+                        success: function () {
+                            button.parents("tr").remove();
+                        }
+                    })
+                }
+                Let us replace above if block with below to have Bootbox dialog confirm box 
+                */
+                bootbox.confirm("Are you sure you want to delete this customer?", function (result) {
+                    //if this result has truthy value which means it is not null or undefined
+                    //then we will make our ajax call 
+                    if (result) {
+                        $.ajax({
+                            url: "api/customers/" + button.attr("data-customer-id"),
+                            method: "DELETE",
+                            success: function () {
+                                button.parents("tr").remove();
+                            }
+                        })
+                    }
+                });
+            })
+        });
+    </script>
+}

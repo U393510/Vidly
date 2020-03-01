@@ -1,0 +1,85 @@
+﻿@{
+    ViewBag.Title = "Movies";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Movies</h2>
+<button class=" btn btn-primary btn-link">@Html.ActionLink("New Movie","NewMovie","Movies")</button><br/>
+<table id="movies" class="table table-bordered table-hover">
+    <thead>
+        <tr>
+            <th>Movie</th>
+            <th>Genre</th>
+            <th>Delete</th>
+        </tr>
+    </thead>
+    <tbody>
+
+    </tbody>
+</table>
+   
+@section scripts 
+{
+<script>
+    $(document).ready(function () {
+
+        var movietable = $("#movies").DataTable({
+            //Step1: Specify data source for Jquery DataTable Plugin
+            //In current case Movie api directly providing data so dataSrc set empty string
+            ajax: {
+                url: "/api/movies",
+                dataSrc: ""
+            },
+            //Step2: Create columns and define them in an array
+            columns: [
+                {
+                    //our first column in the view shows movie names with hyperlink attached
+                    //so when link clicked it goes to /movies/edit/1 example 
+                    data: "name",
+                    render: function (data, movie) {
+                        return "<a href = '/movies/edit/'" + movie.id + "'>" + data + "</a>"
+                    }
+                },
+                {
+                    //second column shows Movie Genre
+                    data: "genre.name"
+                },
+                {
+                    data: "id",
+                    render: function (data) {
+                        return "<button class='btn btn-link js-delete' data-movie-id=" + data + ">Delete</button>";
+                    }
+                }
+            ]
+        });
+        //Now we need add logic for handling Delete button click.
+             //Look for DOM element having id = customers  which is our HTML table 
+            //and search for element in it having js-delete class which is Delete Button
+            //capture button click event and specify call back furnction which
+            //will be called when button is clicked and capture reference to this button. 
+            //we will first ask user to confirm delete and then make an ajax call
+            //having uri + id by using data attribute data-<any Name> specified in delete button and refer to it
+        $("#movies").on("click", ".js-delete", function () {
+            //capture button reference 
+            var button = $(this)
+            //let use bootstrap boobox dialog for get confirmation from the user to delete
+            bootbox.confirm("Are you sure you want to delete this movie?", function (result) { 
+                if (result) {
+                    $.ajax({
+                        url: "/api/movies/" + button.attr("data-movie-id"),
+                        method: "DELETE",
+                        success: function () {
+                            //Remove movie from internal list of data table and 
+                            //draw/build the data table again 
+                            movietable.row(button.parents("tr")).remove().draw();
+                        }
+                    })
+                }
+            })
+        })
+
+    })
+    
+
+</script>
+}
